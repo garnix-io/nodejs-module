@@ -2,7 +2,6 @@
   description = "A garnix module for nodejs";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.dream2nix = {
     url = "github:nix-community/dream2nix";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -12,18 +11,10 @@
   outputs =
     { self
     , dream2nix
-    , flake-utils
     , nixpkgs
     ,
     }:
     let
-      systems = [
-        "aarch64-darwin"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "x86_64-linux"
-      ];
-
       lib = nixpkgs.lib;
 
       nodejsSubmodule.options = {
@@ -56,70 +47,73 @@
           };
         };
 
-        config = builtins.mapAttrs
-          (name: projectConfig:
-            let
-              theModule =
-                { lib
-                , config
-                , dream2nix
-                , ...
-                }:
-                {
-                  imports = [
-                    dream2nix.modules.dream2nix.nodejs-package-lock-v3
-                    dream2nix.modules.dream2nix.nodejs-granular-v3
+        config =
+          let
+            theModule = projectConfig:
+              { lib
+              , config
+              , dream2nix
+              , ...
+              }:
+              {
+                imports = [
+                  dream2nix.modules.dream2nix.nodejs-package-lock-v3
+                  dream2nix.modules.dream2nix.nodejs-granular-v3
+                ];
+
+                mkDerivation = { src = projectConfig.src; };
+
+                deps = { nixpkgs, ... }: {
+                  inherit
+                    (nixpkgs)
+                    fetchFromGitHub
+                    stdenv
+                    ;
+                };
+
+                nodejs-package-lock-v3 = {
+                  packageLockFile = "${config.mkDerivation.src}/package-lock.json";
+                };
+
+                name = "nodejs-app";
+                version = "0.1.0";
+
+                paths.projectRoot = ./.;
+                paths.projectRootFile = "flake.nix";
+                paths.package = ./.;
+              };
+          in
+          {
+            packages = builtins.mapAttrs
+              (name: projectConfig: {
+                "${name}" = dream2nix.lib.evalModules {
+                  packageSets.nixpkgs = pkgs;
+                  modules = [
+                    (theModule projectConfig)
                   ];
-
-                  mkDerivation = { src = projectConfig.src; };
-
-                  deps = { nixpkgs, ... }: {
-                    inherit
-                      (nixpkgs)
-                      fetchFromGitHub
-                      stdenv
-                      ;
-                  };
-
-                  nodejs-package-lock-v3 = {
-                    packageLockFile = "${config.mkDerivation.src}/package-lock.json";
-                  };
-
-                  name = "nodejs-app";
-                  version = "0.1.0";
-
-                  paths.projectRoot = ./.;
-                  paths.projectRootFile = "flake.nix";
-                  paths.package = ./.;
                 };
-              in {
-                packages = {
-                  "${name}" = dream2nix.lib.evalModules {
-                    packageSets.nixpkgs = pkgs;
-                    modules = [
-                      theModule
-                    ];
+              })
+              config.nodejs;
+            nixosConfigurations = builtins.mapAttrs
+              (name: projectConfig: {
+                systemd.services.${name} = {
+                  description = "${name} nodejs garnix module";
+                  wantedBy = [ "multi-user.target" ];
+                  after = [ "network-online.target" ];
+                  wants = [ "network-online.target" ];
+                  serviceConfig = {
+                    Type = "simple";
+                    DynamicUser = true;
+                    ExecStart = lib.getExe (pkgs.writeShellApplication {
+                      name = "start-${name}";
+                      runtimeInputs = [ config.packages.${name} ];
+                      text = projectConfig.serverCommand;
+                    });
                   };
                 };
-                nixosConfigurations = {
-                  systemd.services.${name} = {
-                    description = "${name} nodejs garnix module";
-                    wantedBy = [ "multi-user.target" ];
-                    after = [ "network-online.target" ];
-                    wants = [ "network-online.target" ];
-                    serviceConfig = {
-                      Type = "simple";
-                      DynamicUser = true;
-                      ExecStart = lib.getExe (pkgs.writeShellApplication {
-                        name = "start-${name}";
-                        runtimeInputs = [ config.packages.${name} ];
-                        text = projectConfig.serverCommand;
-                      });
-                    };
-                  };
-                };
-              }
-          ) config.nodejs;
+              })
+              config.nodejs;
+          };
       };
     };
 }
