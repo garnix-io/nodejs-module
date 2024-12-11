@@ -24,6 +24,12 @@
           example = ./.;
         };
 
+        prettier = lib.mkOption {
+          type = lib.types.bool;
+          description = "Whether to create a CI check with prettier, and add it to the devshells";
+          default = false;
+        };
+
         testCommand = lib.mkOption {
           type = lib.types.str;
           description = "The command to run the test. Default: npm run test";
@@ -85,15 +91,28 @@
           in
           {
             packages = builtins.mapAttrs
-              (name: projectConfig: {
-                "${name}" = dream2nix.lib.evalModules {
+              (name: projectConfig:
+                dream2nix.lib.evalModules {
                   packageSets.nixpkgs = pkgs;
                   modules = [
                     (theModule projectConfig)
                   ];
-                };
-              })
+                }
+              )
               config.nodejs;
+            checks = lib.foldlAttrs
+              (acc: name: projectConfig: acc //
+              {
+                ${if projectConfig.prettier then
+                  "${name}-prettier" else null} = pkgs.runCommand
+                    "${name}-prettier"
+                    { buildInputs = [ pkgs.nodePackages.prettier ]; }
+                    ''
+                    prettier --check ${projectConfig.src}
+                    mkdir $out
+                    ''
+                    ;
+              }) {} config.nodejs;
             nixosConfigurations = builtins.mapAttrs
               (name: projectConfig: {
                 systemd.services.${name} = {
