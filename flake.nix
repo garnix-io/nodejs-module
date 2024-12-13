@@ -89,7 +89,7 @@
                 paths.package = ./.;
               };
           in
-          {
+          rec {
             packages = builtins.mapAttrs
               (name: projectConfig:
                 dream2nix.lib.evalModules {
@@ -103,6 +103,26 @@
             checks = lib.foldlAttrs
               (acc: name: projectConfig: acc //
               {
+                "${name}-test" = pkgs.runCommand
+                  "${name}-test"
+                  { buildInputs = [
+                    pkgs.nodejs
+                  ]; }
+                  ''
+                    GLOBIGNORE=".:.."
+                    cp -r ${packages."${name}"}/lib/node_modules/nodejs-app/* .
+                    chmod -R 755 .
+
+                    export PATH=${packages."${name}"}/lib/node_modules/.bin:$PATH
+
+                    # The .gitignore might be outside the dir. So we add some
+                    # basic things since it influences e.g. ESLint
+                    touch /build/.gitignore
+                    echo build/ >> /build/.gitignore
+
+                    ${projectConfig.testCommand}
+                    mkdir $out
+                  '';
                 ${if projectConfig.prettier then
                   "${name}-prettier" else null} = pkgs.runCommand
                     "${name}-prettier"
