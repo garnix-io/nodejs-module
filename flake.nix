@@ -106,9 +106,13 @@
                 ${if projectConfig.prettier then
                   "${name}-prettier" else null} = pkgs.runCommand
                     "${name}-prettier"
-                    { buildInputs = [ pkgs.nodePackages.prettier ]; }
+                    { buildInputs = [
+                      pkgs.nodePackages.prettier
+                      pkgs.coreutils
+                    ]; }
                     ''
-                    prettier --check ${projectConfig.src}
+                    find ${projectConfig.src} -regex '.*\.\(js\|jsx\|ts\|tsx\)' |
+                      xargs prettier --check
                     mkdir $out
                     ''
                     ;
