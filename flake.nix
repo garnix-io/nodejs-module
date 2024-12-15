@@ -3,7 +3,7 @@
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
   inputs.dream2nix = {
-    url = "github:nix-community/dream2nix";
+    url = "github:jkarni/dream2nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
