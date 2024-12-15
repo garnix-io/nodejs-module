@@ -30,6 +30,24 @@
           default = false;
         };
 
+        devTools = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "A list of packages make available in the devshell for this project. This is useful for things like LSPs, formatters, etc.";
+          default = [];
+        };
+
+        buildDependencies = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "A list of dependencies required to build this package. They are made available in the devshell, and at build time";
+          default = [];
+        };
+
+        runtimeDependencies = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "A list of dependencies required at runtime. They are made available in the devshell, at build time, and are available on the server at runtime";
+          default = [];
+        };
+
         testCommand = lib.mkOption {
           type = lib.types.str;
           description = "The command to run the test. Default: npm run test";
@@ -55,6 +73,8 @@
 
         config =
           let
+            mkPackage = pkgName : pkgs.${pkgName};
+            mkPackages = builtins.map mkPackage;
             theModule = projectConfig:
               { lib
               , config
@@ -67,7 +87,10 @@
                   dream2nix.modules.dream2nix.nodejs-granular-v3
                 ];
 
-                mkDerivation = { src = projectConfig.src; };
+                mkDerivation = {
+                  src = projectConfig.src;
+                  buildInputs = mkPackages projectConfig.buildDependencies;
+                };
 
                 deps = { nixpkgs, ... }: {
                   inherit
@@ -107,7 +130,7 @@
                   "${name}-test"
                   { buildInputs = [
                     pkgs.nodejs
-                  ]; }
+                  ] ++ (mkPackages projectConfig.buildDependencies); }
                   ''
                     GLOBIGNORE=".:.."
                     cp -r ${packages."${name}"}/lib/node_modules/nodejs-app/* .
@@ -119,6 +142,8 @@
                     # basic things since it influences e.g. ESLint
                     touch /build/.gitignore
                     echo build/ >> /build/.gitignore
+
+                    ls
 
                     ${projectConfig.testCommand}
                     mkdir $out
@@ -137,8 +162,24 @@
                     ''
                     ;
               }) {} config.nodejs;
+
+            devShells = builtins.mapAttrs (name: projectConfig:
+              pkgs.mkShell {
+                inputsFrom = [packages."${name}"];
+                packages =
+                  (mkPackages projectConfig.devTools) ++
+                  (mkPackages projectConfig.buildDependencies) ++
+                  (mkPackages projectConfig.runtimeDependencies) ++
+                  (if projectConfig.prettier then [pkgs.nodePackages.prettier] else [])
+                  ;
+              }
+            ) config.nodejs;
+
+
             nixosConfigurations = builtins.mapAttrs
               (name: projectConfig: {
+                environment.systemPackages = projectConfig.runtimeDependencies;
+
                 systemd.services.${name} = {
                   description = "${name} nodejs garnix module";
                   wantedBy = [ "multi-user.target" ];
@@ -149,7 +190,8 @@
                     DynamicUser = true;
                     ExecStart = lib.getExe (pkgs.writeShellApplication {
                       name = "start-${name}";
-                      runtimeInputs = [ config.packages.${name} ];
+                      runtimeInputs = [ config.packages.${name}
+                      ] ++ projectConfig.runtimeDependencies;
                       text = projectConfig.serverCommand;
                     });
                   };
