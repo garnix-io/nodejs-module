@@ -143,8 +143,6 @@
                     touch /build/.gitignore
                     echo build/ >> /build/.gitignore
 
-                    ls
-
                     ${projectConfig.testCommand}
                     mkdir $out
                   '';
@@ -188,6 +186,11 @@
                   serviceConfig = {
                     Type = "simple";
                     DynamicUser = true;
+                    ExecStartPre = ''
+                      GLOBIGNORE=".:.."
+                      cp -r ${packages."${name}"}/lib/node_modules/nodejs-app/* .
+                      chmod -R 755 .
+                    '';
                     ExecStart = lib.getExe (pkgs.writeShellApplication {
                       name = "start-${name}";
                       runtimeInputs = [ config.packages.${name}
