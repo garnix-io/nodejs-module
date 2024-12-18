@@ -169,6 +169,7 @@
                 pkgs.mkShell {
                   inputsFrom = [ packages."${name}" ];
                   packages =
+                    [ pkgs.nodejs ] ++
                     projectConfig.devTools ++
                     projectConfig.buildDependencies ++
                     projectConfig.runtimeDependencies ++
@@ -199,6 +200,7 @@
                     ExecStart = lib.getExe (pkgs.writeShellApplication {
                       name = "start-${name}";
                       runtimeInputs = [
+                        pkgs.nodejs
                         config.packages.${name}
                       ] ++ projectConfig.runtimeDependencies;
                       text = projectConfig.serverCommand;
