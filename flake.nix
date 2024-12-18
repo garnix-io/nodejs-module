@@ -181,7 +181,7 @@
               config.nodejs;
 
 
-            nixosConfigurations = builtins.mapAttrs
+            nixosConfigurations.default = builtins.attrValues (builtins.mapAttrs
               (name: projectConfig: {
                 environment.systemPackages = projectConfig.runtimeDependencies;
 
@@ -208,7 +208,7 @@
                   };
                 };
               })
-              config.nodejs;
+              config.nodejs);
           };
       };
     };
