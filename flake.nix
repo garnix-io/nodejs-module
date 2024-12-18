@@ -33,19 +33,19 @@
         devTools = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           description = "A list of packages make available in the devshell for this project. This is useful for things like LSPs, formatters, etc.";
-          default = [];
+          default = [ ];
         };
 
         buildDependencies = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           description = "A list of dependencies required to build this package. They are made available in the devshell, and at build time";
-          default = [];
+          default = [ ];
         };
 
         runtimeDependencies = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           description = "A list of dependencies required at runtime. They are made available in the devshell, at build time, and are available on the server at runtime";
-          default = [];
+          default = [ ];
         };
 
         testCommand = lib.mkOption {
@@ -73,7 +73,7 @@
 
         config =
           let
-            mkPackage = pkgName : pkgs.${pkgName};
+            mkPackage = pkgName: pkgs.${pkgName};
             mkPackages = builtins.map mkPackage;
             theModule = projectConfig:
               { lib
@@ -125,53 +125,60 @@
               config.nodejs;
             checks = lib.foldlAttrs
               (acc: name: projectConfig: acc //
-              {
-                "${name}-test" = pkgs.runCommand
-                  "${name}-test"
-                  { buildInputs = [
-                    pkgs.nodejs
-                  ] ++ (mkPackages projectConfig.buildDependencies); }
-                  ''
-                    GLOBIGNORE=".:.."
-                    cp -r ${packages."${name}"}/lib/node_modules/nodejs-app/* .
-                    chmod -R 755 .
+                {
+                  "${name}-test" = pkgs.runCommand
+                    "${name}-test"
+                    {
+                      buildInputs = [
+                        pkgs.nodejs
+                      ] ++ (mkPackages projectConfig.buildDependencies);
+                    }
+                    ''
+                      GLOBIGNORE=".:.."
+                      cp -r ${packages."${name}"}/lib/node_modules/nodejs-app/* .
+                      chmod -R 755 .
 
-                    export PATH=${packages."${name}"}/lib/node_modules/.bin:$PATH
+                      export PATH=${packages."${name}"}/lib/node_modules/.bin:$PATH
 
-                    # The .gitignore might be outside the dir. So we add some
-                    # basic things since it influences e.g. ESLint
-                    touch /build/.gitignore
-                    echo build/ >> /build/.gitignore
+                      # The .gitignore might be outside the dir. So we add some
+                      # basic things since it influences e.g. ESLint
+                      touch /build/.gitignore
+                      echo build/ >> /build/.gitignore
 
-                    ${projectConfig.testCommand}
-                    mkdir $out
-                  '';
-                ${if projectConfig.prettier then
-                  "${name}-prettier" else null} = pkgs.runCommand
+                      ${projectConfig.testCommand}
+                      mkdir $out
+                    '';
+                  "${name}-prettier" = lib.mkIf projectConfig.prettier (pkgs.runCommand
                     "${name}-prettier"
-                    { buildInputs = [
-                      pkgs.nodePackages.prettier
-                      pkgs.coreutils
-                    ]; }
+                    {
+                      buildInputs = [
+                        pkgs.nodePackages.prettier
+                        pkgs.coreutils
+                      ];
+                    }
                     ''
-                    find ${projectConfig.src} -regex '.*\.\(js\|jsx\|ts\|tsx\)' |
-                      xargs prettier --check
-                    mkdir $out
+                      find ${projectConfig.src} -regex '.*\.\(js\|jsx\|ts\|tsx\)' |
+                        xargs prettier --check
+                      mkdir $out
                     ''
-                    ;
-              }) {} config.nodejs;
+                  );
+                })
+              { }
+              config.nodejs;
 
-            devShells = builtins.mapAttrs (name: projectConfig:
-              pkgs.mkShell {
-                inputsFrom = [packages."${name}"];
-                packages =
-                  (mkPackages projectConfig.devTools) ++
-                  (mkPackages projectConfig.buildDependencies) ++
-                  (mkPackages projectConfig.runtimeDependencies) ++
-                  (if projectConfig.prettier then [pkgs.nodePackages.prettier] else [])
+            devShells = builtins.mapAttrs
+              (name: projectConfig:
+                pkgs.mkShell {
+                  inputsFrom = [ packages."${name}" ];
+                  packages =
+                    (mkPackages projectConfig.devTools) ++
+                    (mkPackages projectConfig.buildDependencies) ++
+                    (mkPackages projectConfig.runtimeDependencies) ++
+                    (if projectConfig.prettier then [ pkgs.nodePackages.prettier ] else [ ])
                   ;
-              }
-            ) config.nodejs;
+                }
+              )
+              config.nodejs;
 
 
             nixosConfigurations = builtins.mapAttrs
@@ -193,7 +200,8 @@
                     '';
                     ExecStart = lib.getExe (pkgs.writeShellApplication {
                       name = "start-${name}";
-                      runtimeInputs = [ config.packages.${name}
+                      runtimeInputs = [
+                        config.packages.${name}
                       ] ++ projectConfig.runtimeDependencies;
                       text = projectConfig.serverCommand;
                     });
