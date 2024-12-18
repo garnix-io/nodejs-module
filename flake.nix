@@ -31,19 +31,19 @@
         };
 
         devTools = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
+          type = lib.types.listOf lib.types.package;
           description = "A list of packages make available in the devshell for this project. This is useful for things like LSPs, formatters, etc.";
           default = [ ];
         };
 
         buildDependencies = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
+          type = lib.types.listOf lib.types.package;
           description = "A list of dependencies required to build this package. They are made available in the devshell, and at build time";
           default = [ ];
         };
 
         runtimeDependencies = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
+          type = lib.types.listOf lib.types.package;
           description = "A list of dependencies required at runtime. They are made available in the devshell, at build time, and are available on the server at runtime";
           default = [ ];
         };
@@ -73,8 +73,6 @@
 
         config =
           let
-            mkPackage = pkgName: pkgs.${pkgName};
-            mkPackages = builtins.map mkPackage;
             theModule = projectConfig:
               { lib
               , config
@@ -89,7 +87,7 @@
 
                 mkDerivation = {
                   src = projectConfig.src;
-                  buildInputs = mkPackages projectConfig.buildDependencies;
+                  buildInputs = projectConfig.buildDependencies;
                 };
 
                 deps = { nixpkgs, ... }: {
@@ -131,7 +129,7 @@
                     {
                       buildInputs = [
                         pkgs.nodejs
-                      ] ++ (mkPackages projectConfig.buildDependencies);
+                      ] ++ projectConfig.buildDependencies;
                     }
                     ''
                       GLOBIGNORE=".:.."
@@ -171,9 +169,9 @@
                 pkgs.mkShell {
                   inputsFrom = [ packages."${name}" ];
                   packages =
-                    (mkPackages projectConfig.devTools) ++
-                    (mkPackages projectConfig.buildDependencies) ++
-                    (mkPackages projectConfig.runtimeDependencies) ++
+                    projectConfig.devTools ++
+                    projectConfig.buildDependencies ++
+                    projectConfig.runtimeDependencies ++
                     (if projectConfig.prettier then [ pkgs.nodePackages.prettier ] else [ ])
                   ;
                 }
