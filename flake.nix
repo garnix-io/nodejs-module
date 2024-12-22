@@ -17,6 +17,27 @@
     let
       lib = nixpkgs.lib;
 
+
+      webServerSubmodule.options = {
+        command = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          description = "The command to run to start the server in production";
+          example = "server --port 7000";
+        };
+
+        port = lib.mkOption {
+          type = lib.types.port;
+          description = "Port to forward incoming http requests to";
+          example = 7000;
+        };
+
+        path = lib.mkOption {
+          type = lib.types.nonEmptyStr;
+          description = "Path to host your rust server on";
+          default = "/";
+        };
+      };
+
       nodejsSubmodule.options = {
         src = lib.mkOption {
           type = lib.types.path;
@@ -54,10 +75,10 @@
           default = "npm run test";
         };
 
-        serverCommand = lib.mkOption {
-          type = lib.types.str;
-          description = "The command to run to start the server in production";
-          example = "server --port 7000";
+        webServer = lib.mkOption {
+          type = lib.types.nullOr (lib.types.submodule webServerSubmodule);
+          description = "If set, creates a server with this configuration.";
+          default = null;
         };
 
       };
@@ -180,35 +201,55 @@
               config.nodejs;
 
 
-            nixosConfigurations.default = builtins.attrValues (builtins.mapAttrs
-              (name: projectConfig: {
-                environment.systemPackages = projectConfig.runtimeDependencies;
-
-                systemd.services.${name} = {
-                  description = "${name} nodejs garnix module";
-                  wantedBy = [ "multi-user.target" ];
-                  after = [ "network-online.target" ];
-                  wants = [ "network-online.target" ];
-                  serviceConfig = {
-                    Type = "simple";
-                    DynamicUser = true;
-                    ExecStartPre = ''
-                      GLOBIGNORE=".:.."
-                      cp -r ${packages."${name}"}/lib/node_modules/nodejs-app/* .
-                      chmod -R 755 .
-                    '';
-                    ExecStart = lib.getExe (pkgs.writeShellApplication {
-                      name = "start-${name}";
-                      runtimeInputs = [
-                        pkgs.nodejs
-                        config.packages.${name}
-                      ] ++ projectConfig.runtimeDependencies;
-                      text = projectConfig.serverCommand;
-                    });
+            nixosConfigurations.default =
+              # Global nixos configuration
+              [{
+                services.nginx = {
+                  enable = true;
+                  recommendedProxySettings = true;
+                  recommendedOptimisation = true;
+                  virtualHosts.default = {
+                    default = true;
                   };
                 };
-              })
-              config.nodejs);
+
+                networking.firewall.allowedTCPPorts = [ 80 ];
+              }]
+              ++
+              # Per project nixos configuration
+              builtins.attrValues (builtins.mapAttrs
+                (name: projectConfig: lib.mkIf (projectConfig.webServer != null) {
+                  environment.systemPackages = [ pkgs.nodejs ] ++
+                  projectConfig.runtimeDependencies;
+
+                  systemd.services.${name} =
+                    let stateDirectoryBase = "${name}-nodejs-app/";
+                    in {
+                      description = "${name} nodejs garnix module";
+                      wantedBy = [ "multi-user.target" ];
+                      after = [ "network-online.target" ];
+                      wants = [ "network-online.target" ];
+                      serviceConfig = {
+                        Type = "simple";
+                        User = "nobody";
+                        Group = "nobody";
+                        StateDirectory = stateDirectoryBase;
+                        WorkingDirectory = "${packages."${name}"}/lib/node_modules/nodejs-app/";
+                        ExecStart = lib.getExe (pkgs.writeShellApplication {
+                          name = "start-${name}";
+                          runtimeInputs = [
+                            pkgs.nodejs
+                            pkgs.bash
+                            config.packages.${name}
+                          ] ++ projectConfig.runtimeDependencies;
+                          text = projectConfig.webServer.command;
+                        });
+                      };
+                    };
+
+                  services.nginx.virtualHosts.default.locations.${projectConfig.webServer.path}.proxyPass = "http://localhost:${toString projectConfig.webServer.port}";
+                })
+                config.nodejs);
           };
       };
     };
