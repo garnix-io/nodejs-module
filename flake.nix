@@ -33,7 +33,7 @@
 
         path = lib.mkOption {
           type = lib.types.nonEmptyStr;
-          description = "Path to host your rust server on";
+          description = "Path to host your nodejs server on";
           default = "/";
         };
       };
@@ -88,7 +88,7 @@
         options = {
           nodejs = lib.mkOption {
             type = lib.types.attrsOf (lib.types.submodule nodejsSubmodule);
-            description = "An attrset of rust projects to generate";
+            description = "An attrset of nodejs projects to generate";
           };
         };
 
