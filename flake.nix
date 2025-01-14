@@ -28,7 +28,7 @@
         port = lib.mkOption {
           type = lib.types.port;
           description = "Port to forward incoming http requests to";
-          example = 7000;
+          default = 3000;
         };
 
         path = lib.mkOption {
@@ -71,7 +71,7 @@
 
         testCommand = lib.mkOption {
           type = lib.types.str;
-          description = "The command to run the test. Default: npm run test";
+          description = "The command to run the test.";
           default = "npm run test";
         };
 
