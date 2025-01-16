@@ -77,7 +77,7 @@
 
         webServer = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule webServerSubmodule);
-          description = "If set, creates a server with this configuration.";
+          description = "Whether to create an HTTP server based on this NodeJS project";
           default = null;
         };
 
