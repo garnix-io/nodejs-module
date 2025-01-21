@@ -42,7 +42,7 @@
         src = lib.mkOption {
           type = lib.types.path;
           description = "A path to the directory containing package.json, package.lock, and src";
-          example = ./.;
+          example = "./.";
         };
 
         prettier = lib.mkOption {
