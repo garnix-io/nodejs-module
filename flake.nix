@@ -84,7 +84,11 @@
       };
     in
     {
-      garnixModules.default = { pkgs, config, ... }: {
+      garnixModules.default = { pkgs, config, ... }:
+      let hasAnyWebServer = 
+        builtins.any (projectConfig: projectConfig.webServer != null)
+        (builtins.attrValues config.nodejs);
+      in {
         options = {
           nodejs = lib.mkOption {
             type = lib.types.attrsOf (lib.types.submodule nodejsSubmodule);
@@ -201,7 +205,8 @@
               config.nodejs;
 
 
-            nixosConfigurations.default =
+            nixosConfigurations = lib.mkIf hasAnyWebServer {
+              default =
               # Global nixos configuration
               [{
                 services.nginx = {
@@ -250,7 +255,7 @@
                   services.nginx.virtualHosts.default.locations.${projectConfig.webServer.path}.proxyPass = "http://localhost:${toString projectConfig.webServer.port}";
                 })
                 config.nodejs);
-          };
+          };};
       };
     };
 }
