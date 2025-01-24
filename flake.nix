@@ -1,5 +1,5 @@
 {
-  description = "A garnix module for nodejs";
+  description = "A garnix module for nodejs.";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
   inputs.dream2nix = {
@@ -21,19 +21,19 @@
       webServerSubmodule.options = {
         command = lib.mkOption {
           type = lib.types.nonEmptyStr;
-          description = "The command to run to start the server in production";
+          description = "The command to run to start the server in production.";
           example = "server --port 7000";
         };
 
         port = lib.mkOption {
           type = lib.types.port;
-          description = "Port to forward incoming http requests to";
+          description = "Port to forward incoming http requests to. The server command has to listen on this port.";
           default = 3000;
         };
 
         path = lib.mkOption {
           type = lib.types.nonEmptyStr;
-          description = "Path to host your nodejs server on";
+          description = "Path your NodeJS server will be hosted on.";
           default = "/";
         };
       };
@@ -41,13 +41,13 @@
       nodejsSubmodule.options = {
         src = lib.mkOption {
           type = lib.types.path;
-          description = "A path to the directory containing package.json, package.lock, and src";
+          description = "A path to the directory containing package.json, package.lock, and src.";
           example = "./.";
         };
 
         prettier = lib.mkOption {
           type = lib.types.bool;
-          description = "Whether to create a CI check with prettier, and add it to the devshells";
+          description = "Whether to create a CI check with prettier, and add it to the devshells.";
           default = false;
         };
 
@@ -59,13 +59,13 @@
 
         buildDependencies = lib.mkOption {
           type = lib.types.listOf lib.types.package;
-          description = "A list of dependencies required to build this package. They are made available in the devshell, and at build time";
+          description = "A list of dependencies required to build this package. They are made available in the devshell, and at build time.";
           default = [ ];
         };
 
         runtimeDependencies = lib.mkOption {
           type = lib.types.listOf lib.types.package;
-          description = "A list of dependencies required at runtime. They are made available in the devshell, at build time, and are available on the server at runtime";
+          description = "A list of dependencies required at runtime. They are made available in the devshell, at build time, and are available on the server at runtime.";
           default = [ ];
         };
 
@@ -77,7 +77,7 @@
 
         webServer = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule webServerSubmodule);
-          description = "Whether to create an HTTP server based on this NodeJS project";
+          description = "Whether to create an HTTP server based on this NodeJS project.";
           default = null;
         };
 
@@ -92,7 +92,7 @@
         options = {
           nodejs = lib.mkOption {
             type = lib.types.attrsOf (lib.types.submodule nodejsSubmodule);
-            description = "An attrset of nodejs projects to generate";
+            description = "An attrset of nodejs projects to generate.";
           };
         };
 
