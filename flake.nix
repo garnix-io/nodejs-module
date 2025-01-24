@@ -23,7 +23,7 @@
           type = lib.types.nonEmptyStr;
           description = "The command to run to start the server in production.";
           example = "server --port 7000";
-        };
+        } // { name = "server command"; };
 
         port = lib.mkOption {
           type = lib.types.port;
@@ -35,7 +35,7 @@
           type = lib.types.nonEmptyStr;
           description = "Path your NodeJS server will be hosted on.";
           default = "/";
-        };
+        } // { name = "api path"; };
       };
 
       nodejsSubmodule.options = {
@@ -43,7 +43,7 @@
           type = lib.types.path;
           description = "A path to the directory containing package.json, package.lock, and src.";
           example = "./.";
-        };
+        } // { name = "source directory"; };
 
         prettier = lib.mkOption {
           type = lib.types.bool;
@@ -55,7 +55,7 @@
           type = lib.types.listOf lib.types.package;
           description = "A list of packages make available in the devshell for this project. This is useful for things like LSPs, formatters, etc.";
           default = [ ];
-        };
+        } // { name = "development tools"; };
 
         buildDependencies = lib.mkOption {
           type = lib.types.listOf lib.types.package;
