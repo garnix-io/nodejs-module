@@ -35,7 +35,7 @@
           type = lib.types.nonEmptyStr;
           description = "Path your NodeJS server will be hosted on.";
           default = "/";
-        } // { name = "api path"; };
+        } // { name = "API path"; };
       };
 
       nodejsSubmodule.options = {
