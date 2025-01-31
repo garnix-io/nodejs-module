@@ -38,7 +38,7 @@
         path = lib.mkOption
           {
             type = lib.types.nonEmptyStr;
-            description = "Path your NodeJS server will be hosted on.";
+            description = "Path your Node.js server will be hosted on.";
             default = "/";
           } // { name = "API path"; };
       };
@@ -84,7 +84,7 @@
 
         webServer = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule webServerSubmodule);
-          description = "Whether to create an HTTP server based on this NodeJS project.";
+          description = "Whether to create an HTTP server based on this Node.js project.";
           default = null;
         };
 
@@ -101,7 +101,7 @@
           options = {
             nodejs = lib.mkOption {
               type = lib.types.attrsOf (lib.types.submodule nodejsSubmodule);
-              description = "An attrset of nodejs projects to generate.";
+              description = "An attrset of Node.js projects to generate.";
             };
           };
 
@@ -239,7 +239,7 @@
                       systemd.services.${name} =
                         let stateDirectoryBase = "${name}-nodejs-app/";
                         in {
-                          description = "${name} nodejs garnix module";
+                          description = "${name} Node.js garnix module";
                           wantedBy = [ "multi-user.target" ];
                           after = [ "network-online.target" ];
                           wants = [ "network-online.target" ];
