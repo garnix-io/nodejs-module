@@ -1,9 +1,10 @@
 {
-  description = ''A garnix module for projects using Node.js.
+  description = ''
+    A garnix module for projects using Node.js.
 
-  Add dependencies, run tests, and optionally deploy a web server.
+    Add dependencies, run tests, and optionally deploy a web server.
 
-  [Documentation](https://garnix.io/docs/modules/nodejs) - [Source](https://github.com/garnix-io/nodejs-module).
+    [Documentation](https://garnix.io/docs/modules/nodejs) - [Source](https://github.com/garnix-io/nodejs-module).
   '';
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
