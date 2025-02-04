@@ -2,7 +2,7 @@
   description = ''
     A garnix module for projects using NodeJS.
 
-    Add dependencies, run tests, and optionally deploy a web server.
+    Add dependencies, run tests, and optionally deploy a web server. Can be used either for frontend servers and backend servers.
 
     [Documentation](https://garnix.io/docs/modules/nodejs) - [Source](https://github.com/garnix-io/nodejs-module).
   '';
