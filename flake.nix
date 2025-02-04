@@ -1,8 +1,8 @@
 {
   description = ''
-    A garnix module for projects using Node.js.
+    A garnix module for projects using NodeJS.
 
-    Add dependencies, run tests, and optionally deploy a web server.
+    Add dependencies, run tests, and optionally deploy a web server. Can be used either for frontend servers and backend servers.
 
     [Documentation](https://garnix.io/docs/modules/nodejs) - [Source](https://github.com/garnix-io/nodejs-module).
   '';
@@ -34,14 +34,14 @@
 
         port = lib.mkOption {
           type = lib.types.port;
-          description = "Port to forward incoming http requests to. The server command has to listen on this port.";
+          description = "Port to forward incoming HTTP requests to. The server command has to listen on this port.";
           default = 3000;
         };
 
         path = lib.mkOption
           {
             type = lib.types.nonEmptyStr;
-            description = "Path your Node.js server will be hosted on.";
+            description = "Path your NodeJS server will be hosted on.";
             default = "/";
           } // { name = "API path"; };
       };
@@ -87,7 +87,7 @@
 
         webServer = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule webServerSubmodule);
-          description = "Whether to create an HTTP server based on this Node.js project.";
+          description = "Whether to create an HTTP server based on this NodeJS project.";
           default = null;
         };
 
@@ -104,7 +104,7 @@
           options = {
             nodejs = lib.mkOption {
               type = lib.types.attrsOf (lib.types.submodule nodejsSubmodule);
-              description = "An attrset of Node.js projects to generate.";
+              description = "An attrset of NodeJS projects to generate.";
             };
           };
 
@@ -242,7 +242,7 @@
                       systemd.services.${name} =
                         let stateDirectoryBase = "${name}-nodejs-app/";
                         in {
-                          description = "${name} Node.js garnix module";
+                          description = "${name} NodeJS garnix module";
                           wantedBy = [ "multi-user.target" ];
                           after = [ "network-online.target" ];
                           wants = [ "network-online.target" ];
