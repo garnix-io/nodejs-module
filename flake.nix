@@ -183,21 +183,21 @@
                         ${projectConfig.testCommand}
                         mkdir $out
                       '';
-                    "${name}-prettier" = lib.mkIf projectConfig.prettier (pkgs.runCommand
-                      "${name}-prettier"
-                      {
-                        buildInputs = [
-                          pkgs.nodePackages.prettier
-                          pkgs.coreutils
-                        ];
-                      }
-                      ''
-                        find ${projectConfig.src} -regex '.*\.\(js\|jsx\|ts\|tsx\)' |
-                          xargs prettier --check
-                        mkdir $out
-                      ''
-                    );
-                  })
+                  } // (if projectConfig.prettier then {
+                  "${name}-prettier" = pkgs.runCommand
+                    "${name}-prettier"
+                    {
+                      buildInputs = [
+                        pkgs.nodePackages.prettier
+                        pkgs.coreutils
+                      ];
+                    }
+                    ''
+                      find ${projectConfig.src} -regex '.*\.\(js\|jsx\|ts\|tsx\)' |
+                        xargs prettier --check
+                      mkdir $out
+                    '';
+                } else { }))
                 { }
                 config.nodejs;
 
