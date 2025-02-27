@@ -29,12 +29,12 @@
           {
             type = lib.types.nonEmptyStr;
             description = "The command to run to start the server in production.";
-            example = "server --port 7000";
+            example = "server --port \"$PORT\"";
           } // { name = "server command"; };
 
         port = lib.mkOption {
           type = lib.types.port;
-          description = "Port to forward incoming HTTP requests to. The server command has to listen on this port.";
+          description = "Port to forward incoming HTTP requests to. The server command has to listen on this port. This also sets the PORT environment variable for the server command.";
           default = 3000;
         };
 
@@ -87,7 +87,7 @@
 
         webServer = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule webServerSubmodule);
-          description = "Whether to create an HTTP server based on this NodeJS project.";
+          description = "Whether to build a server configuration based on this project and deploy it to the garnix cloud.";
           default = null;
         };
 
@@ -246,6 +246,7 @@
                           wantedBy = [ "multi-user.target" ];
                           after = [ "network-online.target" ];
                           wants = [ "network-online.target" ];
+                          environment.PORT = toString projectConfig.webServer.port;
                           serviceConfig = {
                             Type = "simple";
                             User = "nobody";
