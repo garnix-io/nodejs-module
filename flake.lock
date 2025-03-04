@@ -2,7 +2,9 @@
   "nodes": {
     "dream2nix": {
       "inputs": {
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
         "purescript-overlay": "purescript-overlay",
         "pyproject-nix": "pyproject-nix"
       },
@@ -94,7 +96,8 @@
     },
     "root": {
       "inputs": {
-        "dream2nix": "dream2nix"
+        "dream2nix": "dream2nix",
+        "nixpkgs": "nixpkgs"
       }
     },
     "slimlock": {

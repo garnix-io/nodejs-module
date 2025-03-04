@@ -7,12 +7,14 @@
     [Documentation](https://garnix.io/docs/modules/nodejs) - [Source](https://github.com/garnix-io/nodejs-module).
   '';
 
-  inputs.dream2nix.url = "github:jkarni/dream2nix";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+  inputs.dream2nix = {
+    url = "github:jkarni/dream2nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   outputs =
-    {
-      self,
-      dream2nix,
-    }:
+    { dream2nix, ... }:
     {
       garnixModules.default =
         {
