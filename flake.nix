@@ -7,21 +7,15 @@
     [Documentation](https://garnix.io/docs/modules/nodejs) - [Source](https://github.com/garnix-io/nodejs-module).
   '';
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
-  inputs.dream2nix = {
-    url = "github:jkarni/dream2nix";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
-
+  inputs.dream2nix.url = "github:jkarni/dream2nix";
   outputs =
     { self
     , dream2nix
-    , nixpkgs
     ,
     }:
+    {
+      garnixModules.default = { pkgs, lib, config, ... }:
     let
-      lib = nixpkgs.lib;
 
 
       webServerSubmodule.options = {
@@ -92,14 +86,11 @@
         };
 
       };
+
+      hasAnyWebServer =
+        builtins.any (projectConfig: projectConfig.webServer != null)
+          (builtins.attrValues config.nodejs);
     in
-    {
-      garnixModules.default = { pkgs, config, ... }:
-        let
-          hasAnyWebServer =
-            builtins.any (projectConfig: projectConfig.webServer != null)
-              (builtins.attrValues config.nodejs);
-        in
         {
           options = {
             nodejs = lib.mkOption {
@@ -273,4 +264,3 @@
         };
     };
 }
-
